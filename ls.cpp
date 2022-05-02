@@ -34,22 +34,3 @@ int main (int argc, char **argv){
 	if(flag) putchar(10);
 	closedir(dir);
 }
-
-		// //获取文件属性
-		// struct stat s;
-		// if (lstat(path, &s) < 0)
-		// {
-		// 	printf("get status is fail.\n");
-		// 	printf(path);
-		// }
-
-		// //判断是否为目录，如果是目录递归调用
-		// if (S_ISDIR(s.st_mode))
-		// {
-		// 	printf("find dir : %s\n", path);
-		// 	printDir(path);
-		// }
-		// else
-		// {
-		// 	printf("file: %s/%s\n", dirname, filename->d_name);
-		// }
