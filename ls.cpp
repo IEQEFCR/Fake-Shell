@@ -3,16 +3,17 @@
 #include <dirent.h>
 #include "tools.h"
 
-int main (int argc, char **argv)
-{
-    char *path_name=*(argv+2);
-    char *path=*(argv+1);
+int main (int argc, char **argv){
+    char *path_name;
+    path_name=*(argv+1);
+    // printf("<%s  %d>\n",*argv,argc);
+    // char *path=*(argv+1);
 	struct dirent *filename;
 	DIR *dir;
-	if (path_name == nullptr)
-		dir = opendir(path);//.c_str()
-	else
-		dir = opendir(path_name);
+	// if (path_name == nullptr)
+	// 	dir = opendir(path);//.c_str()
+	// else
+	dir = opendir(path_name);
 	if (dir == nullptr)
 	{
 		warn("No such dir\n");
@@ -29,6 +30,11 @@ int main (int argc, char **argv)
 		printf("%-27s",  filename->d_name);
 		if(flag) putchar(10);
 		flag=!flag;
+	}
+	if(flag) putchar(10);
+	closedir(dir);
+}
+
 		// //获取文件属性
 		// struct stat s;
 		// if (lstat(path, &s) < 0)
@@ -47,7 +53,3 @@ int main (int argc, char **argv)
 		// {
 		// 	printf("file: %s/%s\n", dirname, filename->d_name);
 		// }
-	}
-	if(flag) putchar(10);
-	closedir(dir);
-}
