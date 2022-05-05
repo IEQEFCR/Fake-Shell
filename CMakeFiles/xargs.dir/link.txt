@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/xargs.dir/xargs.cpp.o CMakeFiles/xargs.dir/shell.cpp.o CMakeFiles/xargs.dir/tools.cpp.o -o build/xargs  -lreadline 
