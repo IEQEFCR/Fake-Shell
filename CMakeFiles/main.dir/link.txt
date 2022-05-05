@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/main.dir/shell.cpp.o CMakeFiles/main.dir/tools.cpp.o CMakeFiles/main.dir/main.cpp.o -o build/main  -lreadline 

@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/rm.dir/rm.cpp.o CMakeFiles/rm.dir/tools.cpp.o -o build/rm 
