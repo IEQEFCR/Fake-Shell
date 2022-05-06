@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/mkdir.dir/mkdir.cpp.o -o build/mkdir 
