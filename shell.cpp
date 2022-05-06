@@ -4,12 +4,14 @@ std::string username = "Kai", hostname = "Magicbook", path = "~";
 // char tpath[100]=" ";
 const char CMD[20][100] = {"exit", "echo", "pwd", "cd"};
 char tmpcmd[20][100];
-bool stopped = 0;
+int child = 0;
 
 void signal_handler(int sig) {
     if (sig == SIGINT) {
-        std::cout << "\nctrl+c pressed!\n";
-        stopped = true;
+        int* status;
+        if (!waitpid(child, status, WNOHANG))
+            kill(child, SIGINT);
+        std::cout << "\nCtrl+C Pressed!\n";
     }
 }
 
@@ -38,8 +40,9 @@ void cd(char* path_name) {
     return;
 }
 
-void echo(char* msg) {
-    char* head = msg;
+void echo(
+    char* msg) {  //写复杂了，可以直接遇到"和'跳过，然后用栈记录引号匹配情况
+    char* head = msg;  //下面粗略处理了转义符号，不过好像真正的echo也不转义？
     if (*head == '\0' || *head == '\n')
         return;
     while (*head == ' ')
@@ -89,7 +92,7 @@ void pwd() {
     return;
 }
 
-bool meet(char* single, char* div) {
+bool meet(char* single, char* div) { //判断single是否与div中字符有一样的
     char* head = div;
     while (*head != '\0') {
         if (*head == *single)
@@ -99,7 +102,7 @@ bool meet(char* single, char* div) {
     return 0;
 }
 
-int divide(char* cmd, char* div, char** site) {
+int divide(char* cmd, char* div, char** site) { //切分函数
     char* head = cmd;
     while (meet(head, div) && *head != '\0')
         head++;
@@ -107,71 +110,58 @@ int divide(char* cmd, char* div, char** site) {
     while (1) {
         int len = 0;
         *(site + num) = head;
-        while (!meet(head, div) && *head != '\0') {
-            // tmpcmd[num][len++] = *head;
-            head++;
-        }
-        // tmpcmd[num][len] = '\0';
+        while (!meet(head, div) && *head != '\0') head++;
         while (meet(head, div) && *head != '\0') {
             *head = '\0';
             head++;
         }
-
-        if (*head == '\0') {
-            // ++num;
-            // for (int i = 0; i < path.length(); i++)
-            //     tmpcmd[num][i] = path[i];
-            // tmpcmd[num][path.length()] = '\0';
-            return num;
-        }
+        if (*head == '\0') return num;
         num++;
     }
 }
 
-int translate(char* cmd)  //可用trie树查找命令
-{
+int translate(char* cmd) {
     char* head = cmd;
     while (*head == ' ')
         head++;
-    char* site[20];
-    int num = divide(head, "|", site);
-    if (num >= 1) {
-        int fd[2];
-        pipe(fd);
-        pid_t child_pid;
-        int* status;
-        if ((child_pid = fork()) == 0) {
-            int cp = dup(0);
-            close(fd[1]);
-            dup2(fd[0], 0);
-            translate(site[1]);
-            close(fd[0]);
-            dup2(cp, 0);
-            close(cp);
-            exit(0);
-        } else {
-            int cp = dup(1);
-            close(fd[0]);
-            dup2(fd[1], 1);
-            translate(site[0]);
-            close(fd[1]);
-            dup2(cp, 1);
-            close(cp);
-            while (!waitpid(child_pid, status, WNOHANG)) {
-                if (stopped) {
-                    stopped = 0;
-                    kill(child_pid, SIGKILL);
-                    return 0;
-                }
+    char* tail = head;
+    while (*tail != '\0') {  //处理管道
+        if (*tail == '|') {
+            *tail = '\0';
+            int fd[2];
+            pipe(fd);
+            pid_t child_pid;
+            int* status;
+            if ((child_pid = fork()) == 0) {
+                int cp = dup(0);
+                close(fd[1]);
+                dup2(fd[0], 0);
+                translate(tail + 1);
+                close(fd[0]);
+                dup2(cp, 0);
+                close(cp);
+                exit(0);
+            } else {
+                int cp = dup(1);
+                close(fd[0]);
+                dup2(fd[1], 1);
+                translate(head);
+                close(fd[1]);
+                dup2(cp, 1);
+                close(cp);
+                while (!waitpid(child_pid, status, WNOHANG))
+                    ;  //阻塞
             }
+            return 0;
         }
-        return 0;
+        tail++;
     }
-    num = divide(head, ">", site);
-    if (num >= 1) {
+    char* site[20];
+    int num = divide(head, ">", site);
+    if (num >= 1) {  //处理输出重定向 ，优先级低于输入重定向
         char* tp[10];
         divide(site[1], " ", tp);
-        int cp=dup(1);
+        int cp = dup(1);
         close(1);
         FILE* fp = fopen(tp[0], "w");
         int fd = fileno(fp);
@@ -181,10 +171,10 @@ int translate(char* cmd)  //可用trie树查找命令
         return 0;
     }
     num = divide(head, "<", site);
-    if (num >= 1) {
+    if (num >= 1) {  //处理输入重定向
         char* tp[10];
         divide(site[1], " ", tp);
-        int cp=dup(0);
+        int cp = dup(0);
         close(0);
         FILE* fp = fopen(tp[0], "r");
         int fd = fileno(fp);
@@ -193,65 +183,58 @@ int translate(char* cmd)  //可用trie树查找命令
         close(cp);
         return 0;
     }
-    char* tail = head;
-    while (*tail != ' ' && *tail != '\0')
-        tail++;
-    char tmp = *tail;
-    *tail = '\0';
 
-    if (!strcmp(head, CMD[1])) {
-        *tail = tmp;
-        echo(head + 4);
-        putchar(10);
-        return 0;
-    }
-
-    if (!strcmp(head, CMD[3])) {
-        *tail = tmp;
-        head += 2;
-        while (*head == ' ')
-            head++;
-        cd(head);
-        return 0;
-    }
-
-    if (!strcmp(head, CMD[2])) {
-        *tail = tmp;
-        pwd();
-        return 0;
-    }
-
-    if (!strcmp(head, CMD[0])) {
-        *tail = tmp;
-        return 1;
-    }
-
-    *tail = tmp;
-
-    // std::cout << num << "\n";
-    // char* argv[20];
-    // for (int i = 0; i <= num; i++) {
-    //     // argv[i] = tmpcmd[i];
-    //     printf("[%s]\n", site[i]);
-    // }
-   // xargs cat > file3 这
     char* argv[20];
-    argv[divide(head, " ", argv) + 1] = NULL;
+    bool isbackstage = 0;  //是否后台运行
+    int arg_num = divide(head, " ", argv);
+    if (*argv[arg_num] == '&')
+        isbackstage = 1, argv[arg_num--] = NULL;
+    else
+        argv[arg_num + 1] = NULL;
     pid_t child_pid;
     int* status;
     std::string realcmd = argv[0];
-    realcmd = "/home/kai/shell/build/" + realcmd;
-
+    if (!strcmp(argv[0], CMD[0]))
+        return 1;
+    if (!strcmp(argv[0], CMD[3])) {
+        cd(argv[1]);
+        return 0;
+    }
     if ((child_pid = fork()) == 0) {
-        if (execv(realcmd.c_str(), argv) == -1)
-            exit(0);
-    } else {
-        while (!waitpid(child_pid, status, WNOHANG)) {
-            if (stopped) {
-                stopped = 0;
-                kill(child_pid, SIGKILL);
-                return 0;
+        if (!strcmp(argv[0], CMD[1])) {
+            for (int i = 1; i <= arg_num; i++) {
+                echo(argv[i]);
+                if (i < arg_num)
+                    putchar(' ');
+                else
+                    putchar(10);
             }
+        } else if (!strcmp(argv[0], CMD[2]))
+            pwd();
+        else {
+            char buffer[256];
+            FILE* fp = fopen("/home/kai/shell/build/.my_env", "r");
+            while (fgets(buffer, 256, fp) != nullptr) {
+                char* find = strchr(buffer, '\n');
+                if (find)
+                    *find = '\0';
+                // printf("<%s>\n", buffer); 输出当前命令路径
+                strcat(buffer, argv[0]);
+                if (execv(buffer, argv) != -1)
+                    break;
+            }
+            fclose(fp);
+            exit(0);
+        }
+        exit(0);
+    } else {
+        child = child_pid;
+        if (isbackstage) {
+            printf("[%d] is running backstage\n", child_pid);  //如果后台，不阻塞，直接走
+            return 0;
+        } else {
+            int* status;
+            while (!waitpid(child_pid, status, WNOHANG)); //阻塞，不进行下一次命令处理
         }
     }
 }

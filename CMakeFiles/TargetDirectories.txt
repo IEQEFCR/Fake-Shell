@@ -1,0 +1,9 @@
+/home/kai/shell/CMakeFiles/main.dir
+/home/kai/shell/CMakeFiles/ls.dir
+/home/kai/shell/CMakeFiles/cat.dir
+/home/kai/shell/CMakeFiles/rm.dir
+/home/kai/shell/CMakeFiles/touch.dir
+/home/kai/shell/CMakeFiles/mkdir.dir
+/home/kai/shell/CMakeFiles/xargs.dir
+/home/kai/shell/CMakeFiles/edit_cache.dir
+/home/kai/shell/CMakeFiles/rebuild_cache.dir

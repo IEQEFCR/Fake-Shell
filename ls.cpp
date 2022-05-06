@@ -25,6 +25,7 @@ int ls(DIR* dir) {
 }
 
 int main(int argc, char** argv) {
+    // sleep(2);
     DIR* dir;
     if (argc == 1) {
         char tp[100];
@@ -33,6 +34,11 @@ int main(int argc, char** argv) {
         ls(dir);
     } else {
         for (int i = 1; i < argc; i++) {
+            char *er=*(argv+i);
+            while(*er!='\0') {
+                if(*er=='\n') *er='\0';
+                er++;
+            }
             printf("%s :\n",*(argv+i));
             dir = opendir(*(argv + i));
             ls(dir);
