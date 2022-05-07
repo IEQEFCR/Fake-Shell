@@ -3,6 +3,9 @@
 int main(int argc, char** argv) {
     if (argc == 1) {
         char tp;
+        while ((tp = getchar()) != EOF)
+           putchar(tp);
+        return 0;
     }
     char tp, args[1024], cmd[2048] = "";
     int len = 1;
@@ -13,7 +16,7 @@ int main(int argc, char** argv) {
         char d = ' ';
         cmd_site = 2;
         div += 2;
-        if (*div == '\0'){
+        if (*div == '\0') {
             div = *(argv + 2), cmd_site++;
         }
         if (*div == '\'') {
@@ -27,7 +30,7 @@ int main(int argc, char** argv) {
             d = *div;
         while ((tp = getchar()) != EOF)
             args[len++] = (tp == d ? ' ' : tp);
-        if (*(argv+cmd_site)==NULL) {
+        if (*(argv + cmd_site) == NULL) {
             printf("%s", args + 1);
             return 0;
         }

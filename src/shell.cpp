@@ -213,7 +213,7 @@ int translate(char* cmd) {
             pwd();
         else {
             char buffer[256];
-            FILE* fp = fopen("/home/kai/shell/build/.my_env", "r");
+            FILE* fp = fopen("/home/kai/shell/.my_env", "r");
             while (fgets(buffer, 256, fp) != nullptr) {
                 char* find = strchr(buffer, '\n');
                 if (find)
